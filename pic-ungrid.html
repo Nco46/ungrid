@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Collage bord à bord d'images</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #0e1116;
+      --bg-panel: #171b23;
+      --bg-panel-2: #1f2430;
+      --border: #2a3040;
+      --text: #e6e9ef;
+      --text-muted: #8a93a6;
+      --accent: #4cc9f0;
+      --accent-2: #7b61ff;
+      --danger: #ff5c5c;
+      --success: #42d392;
+      --radius: 10px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top left, #141822, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, rgba(76, 201, 240, 0.08), transparent);
+    }
+
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    header h1 span {
+      color: var(--accent);
+    }
+
+    .layout {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .sidebar {
+      flex: 0 0 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .main {
+      flex: 1 1 600px;
+      min-width: 320px;
+    }
+
+    h2 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 0 0 12px 0;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(76, 201, 240, 0.06);
+      color: var(--text);
+    }
+
+    .dropzone input {
+      display: none;
+    }
+
+    .btn {
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      color: #0b0d12;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      color: #0b0d12;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .field input[type="number"],
+    .field select,
+    .field input[type="text"] {
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .row2 {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row2>div {
+      flex: 1;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 16px;
+      margin-top: 4px;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.ok {
+      color: var(--success);
+    }
+
+    #gridContainer {
+      display: grid;
+      gap: 0;
+      width: 100%;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .tile {
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      outline: 1px solid rgba(255, 255, 255, 0.03);
+      transition: outline-color 0.15s ease, filter 0.15s ease;
+    }
+
+    .tile img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .tile.dragging {
+      opacity: 0.35;
+    }
+
+    .tile.dragover {
+      outline: 2px solid var(--accent);
+      filter: brightness(1.15);
+    }
+
+    .tile .idx {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.55);
+      color: var(--text);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .empty-hint {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 14px;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-row input[type="range"] {
+      flex: 1;
+    }
+
+    .slider-row span {
+      font-size: 12px;
+      color: var(--text-muted);
+      width: 36px;
+      text-align: right;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        flex: 1 1 100%;
+      }
+
+      .main {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Collage <span>bord à bord</span> d'images</h1>
+  </header>
+
+  <div class="layout">
+
+    <div class="sidebar">
+
+      <div class="panel">
+        <h2>1. Charger les fragments</h2>
+        <div class="dropzone" id="dropzone">
+          <div>Déposez vos images ici<br>ou cliquez pour sélectionner</div>
+          <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+        <div style="height:8px"></div>
+        <button class="btn" id="loadBtn">📁 Charger les images</button>
+        <div class="status" id="loadStatus"></div>
+      </div>
+
+      <div class="panel">
+        <h2>2. Grille</h2>
+        <div class="row2">
+          <div class="field">
+            <label>Lignes</label>
+            <input type="number" id="rowsInput" min="1" value="1">
+          </div>
+          <div class="field">
+            <label>Colonnes</label>
+            <input type="number" id="colsInput" min="1" value="1">
+          </div>
+        </div>
+        <button class="btn" id="applyGridBtn">Appliquer la grille</button>
+        <div style="height:8px"></div>
+        <button class="btn" id="autoArrangeBtn">Ré-arrangement automatique</button>
+        <div class="status" id="gridStatus"></div>
+      </div>
+
+      <div class="panel">
+        <h2>3. Export</h2>
+        <div class="field">
+          <label>Format</label>
+          <select id="formatSelect">
+            <option value="image/png">PNG (sans perte)</option>
+            <option value="image/jpeg">JPEG (compressé)</option>
+          </select>
+        </div>
+        <div class="field" id="qualityField" style="display:none;">
+          <label>Qualité JPEG</label>
+          <div class="slider-row">
+            <input type="range" id="qualityRange" min="10" max="100" value="92">
+            <span id="qualityValue">92%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Nom du fichier</label>
+          <input type="text" id="filenameInput" placeholder="collage">
+        </div>
+        <button class="btn btn-primary" id="validateBtn" disabled>✓ Valider et enregistrer</button>
+        <div class="status" id="exportStatus"></div>
+      </div>
+
+    </div>
+
+    <div class="main panel">
+      <h2>Aperçu — réorganisez les tuiles par glisser-déposer</h2>
+      <div id="gridContainer">
+        <div class="empty-hint">Chargez des images pour commencer</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Traitement 100% local dans le navigateur — aucune image n'est transmise.</footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // ---------- État global ----------
+      var tiles = [];        // { img, edges:{top,bottom,left,right}, w, h }
+      var order = [];        // tableau "aplati" : order[position] = index dans tiles
+      var rows = 1, cols = 1;
+      var draggedPos = null;
+
+      // ---------- Éléments DOM ----------
+      var dropzone = document.getElementById('dropzone');
+      var fileInput = document.getElementById('fileInput');
+      var loadStatus = document.getElementById('loadStatus');
+      var gridStatus = document.getElementById('gridStatus');
+      var exportStatus = document.getElementById('exportStatus');
+      var rowsInput = document.getElementById('rowsInput');
+      var colsInput = document.getElementById('colsInput');
+      var applyGridBtn = document.getElementById('applyGridBtn');
+      var autoArrangeBtn = document.getElementById('autoArrangeBtn');
+      var gridContainer = document.getElementById('gridContainer');
+      var validateBtn = document.getElementById('validateBtn');
+      var formatSelect = document.getElementById('formatSelect');
+      var qualityField = document.getElementById('qualityField');
+      var qualityRange = document.getElementById('qualityRange');
+      var qualityValue = document.getElementById('qualityValue');
+      var filenameInput = document.getElementById('filenameInput');
+
+      // ---------- Dropzone / sélection fichiers ----------
+      dropzone.addEventListener('click', function () { fileInput.click(); });
+
+      dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+      dropzone.addEventListener('dragleave', function () {
+        dropzone.classList.remove('dragover');
+      });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+      fileInput.addEventListener('change', function (e) {
+        handleFiles(e.target.files);
+      });
+
+      function handleFiles(fileList) {
+        var files = Array.prototype.filter.call(fileList, function (f) {
+          return f.type.indexOf('image/') === 0;
+        });
+        if (files.length === 0) {
+          setStatus(loadStatus, "Aucune image valide sélectionnée.", "error");
+          return;
+        }
+        setStatus(loadStatus, "Chargement de " + files.length + " image(s)...", "");
+
+        Promise.all(files.map(loadSingleFile)).then(function (loaded) {
+          tiles = loaded;
+          checkSizeConsistency();
+          setStatus(loadStatus, tiles.length + " image(s) chargée(s).", "ok");
+          initArrangement();
+        }).catch(function (err) {
+          setStatus(loadStatus, "Erreur de chargement : " + err.message, "error");
+        });
+      }
+
+      function loadSingleFile(file) {
+        return new Promise(function (resolve, reject) {
+          var url = URL.createObjectURL(file);
+          var img = new Image();
+          img.onload = function () {
+            var edges = extractEdges(img);
+            resolve({ img: img, edges: edges, w: img.naturalWidth, h: img.naturalHeight, name: file.name });
+          };
+          img.onerror = function () { reject(new Error(file.name)); };
+          img.src = url;
+        });
+      }
+
+      function checkSizeConsistency() {
+        if (tiles.length === 0) return;
+        var w = tiles[0].w, h = tiles[0].h;
+        var mismatch = tiles.some(function (t) { return t.w !== w || t.h !== h; });
+        if (mismatch) {
+          setStatus(loadStatus, "Attention : les images n'ont pas toutes la même taille. Le résultat peut être imprécis.", "error");
+        }
+      }
+
+      // ---------- Extraction des bords ----------
+      function extractEdges(img) {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        return {
+          top: ctx.getImageData(0, 0, w, 1).data,
+          bottom: ctx.getImageData(0, h - 1, w, 1).data,
+          left: ctx.getImageData(0, 0, 1, h).data,
+          right: ctx.getImageData(w - 1, 0, 1, h).data
+        };
+      }
+
+      function edgeDiff(a, b) {
+        var len = Math.min(a.length, b.length);
+        var sum = 0;
+        for (var i = 0; i < len; i += 4) {
+          sum += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+        }
+        return sum / (len / 4 || 1);
+      }
+
+      function buildMatrices() {
+        var n = tiles.length;
+        var H = [], V = [];
+        for (var i = 0; i < n; i++) {
+          H.push(new Array(n).fill(Infinity));
+          V.push(new Array(n).fill(Infinity));
+        }
+        for (var a = 0; a < n; a++) {
+          for (var b = 0; b < n; b++) {
+            if (a === b) continue;
+            H[a][b] = edgeDiff(tiles[a].edges.right, tiles[b].edges.left);
+            V[a][b] = edgeDiff(tiles[a].edges.bottom, tiles[b].edges.top);
+          }
+        }
+        return { H: H, V: V };
+      }
+
+      // ---------- Devine la forme de grille (n = r * c) ----------
+      function guessGridDims(n) {
+        var best = null;
+        for (var r = 1; r <= n; r++) {
+          if (n % r === 0) {
+            var c = n / r;
+            var diff = Math.abs(r - c);
+            if (!best || diff < best.diff) best = { rows: r, cols: c, diff: diff };
+          }
+        }
+        return best || { rows: 1, cols: n, diff: n - 1 };
+      }
+
+      // ---------- Arrangement glouton basé sur la concordance des bords ----------
+      function greedyArrange(n, r, c, H, V, start) {
+        var used = new Array(n).fill(false);
+        used[start] = true;
+        var grid = [];
+        for (var i = 0; i < r; i++) grid.push(new Array(c).fill(-1));
+        grid[0][0] = start;
+        var total = 0;
+
+        for (var row = 0; row < r; row++) {
+          for (var col = 0; col < c; col++) {
+            if (row === 0 && col === 0) continue;
+            var bestIdx = -1, bestCost = Infinity;
+            for (var idx = 0; idx < n; idx++) {
+              if (used[idx]) continue;
+              var cost = 0;
+              if (col > 0) cost += H[grid[row][col - 1]][idx];
+              if (row > 0) cost += V[grid[row - 1][col]][idx];
+              if (cost < bestCost) { bestCost = cost; bestIdx = idx; }
+            }
+            grid[row][col] = bestIdx;
+            used[bestIdx] = true;
+            total += (bestCost === Infinity ? 0 : bestCost);
+          }
+        }
+        return { grid: grid, total: total };
+      }
+
+      function autoArrangeTiles(n, r, c) {
+        var m = buildMatrices();
+        var best = null;
+        var trials = Math.min(n, 15); // limite pour garder de bonnes performances
+        for (var t = 0; t < trials; t++) {
+          var result = greedyArrange(n, r, c, m.H, m.V, t);
+          if (!best || result.total < best.total) best = result;
+        }
+        // Aplatit la grille en tableau "order"
+        var flat = [];
+        for (var row = 0; row < r; row++) {
+          for (var col = 0; col < c; col++) {
+            flat.push(best.grid[row][col]);
+          }
+        }
+        return flat;
+      }
+
+      // ---------- Initialisation après chargement ----------
+      function initArrangement() {
+        var n = tiles.length;
+        var dims = guessGridDims(n);
+        rows = dims.rows;
+        cols = dims.cols;
+        rowsInput.value = rows;
+        colsInput.value = cols;
+
+        order = autoArrangeTiles(n, rows, cols);
+        renderGrid();
+        setStatus(gridStatus, "Grille devinée : " + rows + " x " + cols + ".", "ok");
+        validateBtn.disabled = false;
+      }
+
+      // ---------- Application manuelle de la grille ----------
+      applyGridBtn.addEventListener('click', function () {
+        var r = parseInt(rowsInput.value, 10);
+        var c = parseInt(colsInput.value, 10);
+        if (!r || !c || r < 1 || c < 1) {
+          setStatus(gridStatus, "Valeurs de grille invalides.", "error");
+          return;
+        }
+        if (r * c !== tiles.length) {
+          setStatus(gridStatus, "Lignes x Colonnes (" + (r * c) + ") doit être égal au nombre d'images (" + tiles.length + ").", "error");
+          return;
+        }
+        rows = r; cols = c;
+        order = autoArrangeTiles(tiles.length, rows, cols);
+        renderGrid();
+        setStatus(gridStatus, "Grille appliquée : " + rows + " x " + cols + ".", "ok");
+      });
+
+      autoArrangeBtn.addEventListener('click', function () {
+        if (tiles.length === 0) return;
+        order = autoArrangeTiles(tiles.length, rows, cols);
+        renderGrid();
+        setStatus(gridStatus, "Ré-arrangement automatique effectué.", "ok");
+      });
+
+      var loadBtn = document.getElementById('loadBtn');
+
+      loadBtn.addEventListener('click', function () {
+        fileInput.click();
+      });
+
+
+      // ---------- Rendu de la grille ----------
+      function renderGrid() {
+        gridContainer.innerHTML = '';
+        gridContainer.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+        gridContainer.style.gridTemplateRows = 'repeat(' + rows + ', 1fr)';
+
+        var ratio = (tiles.length > 0) ? (tiles[0].w / tiles[0].h) : 1;
+        gridContainer.style.aspectRatio = (cols * (tiles[0] ? tiles[0].w : 1)) + ' / ' + (rows * (tiles[0] ? tiles[0].h : 1));
+
+        order.forEach(function (tileIndex, pos) {
+          var tile = tiles[tileIndex];
+          var cell = document.createElement('div');
+          cell.className = 'tile';
+          cell.draggable = true;
+          cell.dataset.pos = pos;
+
+          var img = document.createElement('img');
+          img.src = tile.img.src;
+          cell.appendChild(img);
+
+          var idx = document.createElement('div');
+          idx.className = 'idx';
+          idx.textContent = (pos + 1);
+          cell.appendChild(idx);
+
+          cell.addEventListener('dragstart', function () {
+            draggedPos = parseInt(cell.dataset.pos, 10);
+            cell.classList.add('dragging');
+          });
+          cell.addEventListener('dragend', function () {
+            cell.classList.remove('dragging');
+          });
+          cell.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            cell.classList.add('dragover');
+          });
+          cell.addEventListener('dragleave', function () {
+            cell.classList.remove('dragover');
+          });
+          cell.addEventListener('drop', function (e) {
+            e.preventDefault();
+            cell.classList.remove('dragover');
+            var targetPos = parseInt(cell.dataset.pos, 10);
+            if (draggedPos === null || draggedPos === targetPos) return;
+            var tmp = order[draggedPos];
+            order[draggedPos] = order[targetPos];
+            order[targetPos] = tmp;
+            renderGrid();
+          });
+
+          gridContainer.appendChild(cell);
+        });
+      }
+
+      // ---------- Export ----------
+      formatSelect.addEventListener('change', function () {
+        qualityField.style.display = (formatSelect.value === 'image/jpeg') ? 'block' : 'none';
+      });
+      qualityRange.addEventListener('input', function () {
+        qualityValue.textContent = qualityRange.value + '%';
+      });
+
+      validateBtn.addEventListener('click', function () {
+        if (tiles.length === 0) return;
+        try {
+          var tileW = tiles[0].w, tileH = tiles[0].h;
+          var canvas = document.createElement('canvas');
+          canvas.width = cols * tileW;
+          canvas.height = rows * tileH;
+          var ctx = canvas.getContext('2d');
+
+          order.forEach(function (tileIndex, pos) {
+            var r = Math.floor(pos / cols);
+            var c = pos % cols;
+            ctx.drawImage(tiles[tileIndex].img, c * tileW, r * tileH, tileW, tileH);
+          });
+
+          var mime = formatSelect.value;
+          var quality = (mime === 'image/jpeg') ? (parseInt(qualityRange.value, 10) / 100) : undefined;
+          var ext = (mime === 'image/jpeg') ? 'jpg' : 'png';
+          var baseName = (filenameInput.value || '').trim() || 'collage';
+
+          canvas.toBlob(function (blob) {
+            if (!blob) {
+              setStatus(exportStatus, "Échec de la génération de l'image.", "error");
+              return;
+            }
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = baseName + '_' + Date.now() + '.' + ext;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setStatus(exportStatus, "Image enregistrée avec succès.", "ok");
+          }, mime, quality);
+
+        } catch (err) {
+          setStatus(exportStatus, "Erreur lors de l'export : " + err.message, "error");
+        }
+      });
+
+      // ---------- Utilitaire statut ----------
+      function setStatus(el, msg, type) {
+        el.textContent = msg;
+        el.className = 'status' + (type ? ' ' + type : '');
+      }
+
+    })();
+  </script>
+
+</body>
+
+</html>
